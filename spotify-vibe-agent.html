@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Vibe Check — Spotify AI Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1DB954;
+    --green-dim: #158a3e;
+    --black: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --muted: #666;
+    --error: #e05252;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--black);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+
+  /* Ambient background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(29,185,84,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(29,185,84,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Noise texture */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0.5rem;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon svg { width: 18px; height: 18px; fill: #000; }
+
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 10vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: 2px;
+    color: var(--text);
+  }
+
+  h1 span {
+    color: var(--green);
+    display: block;
+  }
+
+  .subtitle {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+
+  .field {
+    margin-bottom: 1.25rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  input, textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    padding: 0.85rem 1rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: none;
+  }
+
+  input::placeholder, textarea::placeholder { color: #3a3a3a; }
+
+  input:focus, textarea:focus {
+    border-color: var(--green);
+    box-shadow: 0 0 0 3px rgba(29,185,84,0.1);
+  }
+
+  .vibe-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.6rem;
+  }
+
+  .chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .chip:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(29,185,84,0.05);
+  }
+
+  .device-hint {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+    line-height: 1.4;
+  }
+
+  .device-hint a {
+    color: var(--green);
+    text-decoration: none;
+  }
+
+  .device-hint a:hover { text-decoration: underline; }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    background: var(--green);
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 1rem;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 0.5rem;
+  }
+
+  .btn:hover {
+    background: #22d160;
+    box-shadow: 0 4px 24px rgba(29,185,84,0.3);
+  }
+
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { background: #1a3d26; color: #2a6640; cursor: not-allowed; box-shadow: none; transform: none; }
+
+  /* Spinner */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,0.3);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  .btn.loading .spinner { display: block; }
+  .btn.loading .btn-text { opacity: 0.7; }
+
+  /* Result */
+  .result {
+    margin-top: 1.5rem;
+    border-radius: 12px;
+    overflow: hidden;
+    animation: fadeUp 0.4s ease both;
+    display: none;
+  }
+
+  .result.show { display: block; }
+
+  .result-inner {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+
+  .result-label {
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .result-label::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 1.5s ease infinite;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .result-item {
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 0.75rem;
+  }
+
+  .result-item-label {
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+
+  .result-item-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .result-item.full { grid-column: 1 / -1; }
+
+  .result-raw {
+    margin-top: 0.75rem;
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 0.75rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: #888;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 160px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .toggle-raw {
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    margin-top: 0.5rem;
+    display: inline-block;
+  }
+
+  .toggle-raw:hover { color: var(--green); }
+
+  /* Error */
+  .error-box {
+    background: rgba(224,82,82,0.08);
+    border: 1px solid rgba(224,82,82,0.3);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    font-size: 0.85rem;
+    color: var(--error);
+    margin-top: 1rem;
+    display: none;
+  }
+
+  .error-box.show { display: block; }
+
+  /* Footer */
+  .footer {
+    margin-top: 2rem;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #333;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Vibe Check</span>
+    </div>
+    <h1>PLAY WHAT<span>YOU FEEL</span></h1>
+    <p class="subtitle">Describe your mood and let AI queue the perfect songs on your Spotify.</p>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>Your Vibe</label>
+      <textarea id="vibe" rows="2" placeholder="e.g. late night drive, rainy day chill, hindi party..."></textarea>
+      <div class="vibe-examples">
+        <span class="chip" onclick="setVibe('Hindi party')">Hindi party</span>
+        <span class="chip" onclick="setVibe('Late night lo-fi')">Late night lo-fi</span>
+        <span class="chip" onclick="setVibe('Morning motivation')">Morning motivation</span>
+        <span class="chip" onclick="setVibe('Sad heartbreak')">Sad heartbreak</span>
+        <span class="chip" onclick="setVibe('90s Bollywood')">90s Bollywood</span>
+        <span class="chip" onclick="setVibe('Workout energy')">Workout energy</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Spotify Device ID</label>
+      <input type="text" id="device_id" placeholder="e.g. abc123def456..."/>
+      <p class="device-hint">
+        Open Spotify, start playing anything, then find your device ID via
+        <a href="https://developer.spotify.com/console/get-users-available-devices/" target="_blank">Spotify Developer Console</a>.
+      </p>
+    </div>
+
+    <button class="btn" id="playBtn" onclick="sendVibe()">
+      <div class="spinner"></div>
+      <span class="btn-text">PLAY MY VIBE</span>
+    </button>
+
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-inner">
+      <div class="result-label">Agent Response</div>
+      <div class="result-grid" id="resultGrid"></div>
+      <span class="toggle-raw" onclick="toggleRaw()">Show raw response ↓</span>
+      <div class="result-raw" id="resultRaw"></div>
+    </div>
+  </div>
+
+  <div class="footer">Powered by n8n · Groq AI · Spotify API</div>
+</div>
+
+<script>
+  const WEBHOOK_URL = 'https://automationid1.app.n8n.cloud/webhook/vibe-check';
+
+  function setVibe(text) {
+    document.getElementById('vibe').value = text;
+    document.getElementById('vibe').focus();
+  }
+
+  function toggleRaw() {
+    const raw = document.getElementById('resultRaw');
+    const toggle = document.querySelector('.toggle-raw');
+    if (raw.style.display === 'block') {
+      raw.style.display = 'none';
+      toggle.textContent = 'Show raw response ↓';
+    } else {
+      raw.style.display = 'block';
+      toggle.textContent = 'Hide raw response ↑';
+    }
+  }
+
+  async function sendVibe() {
+    const vibe = document.getElementById('vibe').value.trim();
+    const device_id = document.getElementById('device_id').value.trim();
+    const btn = document.getElementById('playBtn');
+    const errorBox = document.getElementById('errorBox');
+    const resultEl = document.getElementById('result');
+
+    // Validate
+    if (!vibe) { showError('Please describe your vibe first.'); return; }
+    if (!device_id) { showError('Please enter your Spotify device ID.'); return; }
+
+    // Loading state
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.querySelector('.btn-text').textContent = 'READING YOUR VIBE...';
+    errorBox.classList.remove('show');
+    resultEl.classList.remove('show');
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vibe, device_id })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(`Error ${res.status}: ${data.message || 'Something went wrong.'}`);
+        return;
+      }
+
+      showResult(data);
+
+    } catch (err) {
+      showError('Could not reach the agent. Check your connection and try again.');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent = 'PLAY MY VIBE';
+    }
+  }
+
+  function showError(msg) {
+    const errorBox = document.getElementById('errorBox');
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+  }
+
+  function showResult(data) {
+    const grid = document.getElementById('resultGrid');
+    const raw = document.getElementById('resultRaw');
+    const resultEl = document.getElementById('result');
+
+    grid.innerHTML = '';
+
+    // Try to display known fields nicely
+    const fields = [
+      { key: 'mood', label: 'Mood' },
+      { key: 'energy', label: 'Energy' },
+      { key: 'tempo', label: 'Tempo' },
+      { key: 'search_query', label: 'Search Query', full: true },
+      { key: 'genres', label: 'Genres', full: true },
+    ];
+
+    let hasFields = false;
+    fields.forEach(f => {
+      const val = data[f.key] ?? (data[0] && data[0][f.key]);
+      if (val !== undefined && val !== null) {
+        hasFields = true;
+        const div = document.createElement('div');
+        div.className = 'result-item' + (f.full ? ' full' : '');
+        const displayVal = Array.isArray(val) ? val.join(', ') : val;
+        div.innerHTML = `<div class="result-item-label">${f.label}</div><div class="result-item-value">${displayVal}</div>`;
+        grid.appendChild(div);
+      }
+    });
+
+    if (!hasFields) {
+      const div = document.createElement('div');
+      div.className = 'result-item full';
+      div.innerHTML = `<div class="result-item-label">Response</div><div class="result-item-value">✓ Agent executed successfully</div>`;
+      grid.appendChild(div);
+    }
+
+    raw.textContent = JSON.stringify(data, null, 2);
+    raw.style.display = 'none';
+    document.querySelector('.toggle-raw').textContent = 'Show raw response ↓';
+
+    resultEl.classList.add('show');
+  }
+
+  // Enter key on device_id triggers submit
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('device_id').addEventListener('keydown', e => {
+      if (e.key === 'Enter') sendVibe();
+    });
+  });
+</script>
+</body>
+</html>
