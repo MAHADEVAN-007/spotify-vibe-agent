@@ -161,9 +161,7 @@ textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-s
 </div>
 
 <script>
-// ─── PASTE YOUR CLIENT ID HERE ─────────────────────────
 const CLIENT_ID = 'cc4a8cc3954e49d4af350a919408b582';
-// ───────────────────────────────────────────────────────
 const REDIRECT_URI = 'https://spotify-vibe-agent.netlify.app/callback';
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 const WEBHOOK_URL = 'https://automationid1.app.n8n.cloud/webhook/vibe-check';
@@ -225,9 +223,11 @@ async function sendVibe(){
   const vibe=document.getElementById('vibe').value.trim(), btn=document.getElementById('playBtn'), err=document.getElementById('errorBox'), rc=document.getElementById('resultCard');
   if(!vibe){showErr('Please describe your vibe first!');return;}
   if(!selectedDeviceId){showErr('Connect Spotify and select a device first.');return;}
+  if(!accessToken){showErr('Spotify token missing. Please reconnect.');return;}
   btn.disabled=true;btn.classList.add('loading');btn.querySelector('.btn-text').textContent='READING YOUR VIBE...';err.classList.remove('show');rc.classList.remove('show');
   try{
-    const r=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vibe,device_id:selectedDeviceId})});
+    // sends user's own access_token → n8n plays on their Spotify, not yours
+    const r=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vibe,device_id:selectedDeviceId,access_token:accessToken})});
     const data=await r.json();
     if(!r.ok){showErr(`Error ${r.status}: ${data.message||'Something went wrong.'}`);return;}
     btn.classList.remove('loading');btn.classList.add('playing');btn.querySelector('.btn-text').textContent='NOW PLAYING ♪';
