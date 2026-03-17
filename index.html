@@ -3,557 +3,262 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Vibe Check — Spotify AI Agent</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<title>Vibe Check — AI Spotify Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;700;800&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --green: #1DB954;
-    --green-dim: #158a3e;
-    --black: #0a0a0a;
-    --surface: #111111;
-    --surface2: #1a1a1a;
-    --border: #2a2a2a;
-    --text: #f0f0f0;
-    --muted: #666;
-    --error: #e05252;
-  }
-
-  html, body {
-    height: 100%;
-    background: var(--black);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    overflow-x: hidden;
-  }
-
-  body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem 1rem;
-    position: relative;
-  }
-
-  /* Ambient background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(29,185,84,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 60% at 80% 80%, rgba(29,185,84,0.05) 0%, transparent 60%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* Noise texture */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
-
-  .container {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 480px;
-  }
-
-  /* Header */
-  .header {
-    margin-bottom: 2.5rem;
-    animation: fadeUp 0.6s ease both;
-  }
-
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 0.5rem;
-  }
-
-  .logo-icon {
-    width: 32px;
-    height: 32px;
-    background: var(--green);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .logo-icon svg { width: 18px; height: 18px; fill: #000; }
-
-  .logo-text {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.4rem;
-    letter-spacing: 2px;
-    color: var(--green);
-  }
-
-  h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(3rem, 10vw, 4.5rem);
-    line-height: 0.95;
-    letter-spacing: 2px;
-    color: var(--text);
-  }
-
-  h1 span {
-    color: var(--green);
-    display: block;
-  }
-
-  .subtitle {
-    margin-top: 0.75rem;
-    font-size: 0.9rem;
-    color: var(--muted);
-    font-weight: 300;
-    line-height: 1.5;
-  }
-
-  /* Card */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-
-  .field {
-    margin-bottom: 1.25rem;
-  }
-
-  label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 500;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
-  }
-
-  input, textarea {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 1rem;
-    font-weight: 400;
-    padding: 0.85rem 1rem;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    resize: none;
-  }
-
-  input::placeholder, textarea::placeholder { color: #3a3a3a; }
-
-  input:focus, textarea:focus {
-    border-color: var(--green);
-    box-shadow: 0 0 0 3px rgba(29,185,84,0.1);
-  }
-
-  .vibe-examples {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 0.6rem;
-  }
-
-  .chip {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 0.78rem;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s;
-    user-select: none;
-  }
-
-  .chip:hover {
-    border-color: var(--green);
-    color: var(--green);
-    background: rgba(29,185,84,0.05);
-  }
-
-  .device-hint {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 0.4rem;
-    line-height: 1.4;
-  }
-
-  .device-hint a {
-    color: var(--green);
-    text-decoration: none;
-  }
-
-  .device-hint a:hover { text-decoration: underline; }
-
-  /* Button */
-  .btn {
-    width: 100%;
-    background: var(--green);
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    padding: 1rem;
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    letter-spacing: 2px;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 0.5rem;
-  }
-
-  .btn:hover {
-    background: #22d160;
-    box-shadow: 0 4px 24px rgba(29,185,84,0.3);
-  }
-
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { background: #1a3d26; color: #2a6640; cursor: not-allowed; box-shadow: none; transform: none; }
-
-  /* Spinner */
-  .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(0,0,0,0.3);
-    border-top-color: #000;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-
-  .btn.loading .spinner { display: block; }
-  .btn.loading .btn-text { opacity: 0.7; }
-
-  /* Result */
-  .result {
-    margin-top: 1.5rem;
-    border-radius: 12px;
-    overflow: hidden;
-    animation: fadeUp 0.4s ease both;
-    display: none;
-  }
-
-  .result.show { display: block; }
-
-  .result-inner {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.25rem;
-  }
-
-  .result-label {
-    font-size: 0.7rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--green);
-    font-weight: 500;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .result-label::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--green);
-    border-radius: 50%;
-    animation: pulse 1.5s ease infinite;
-  }
-
-  .result-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-  }
-
-  .result-item {
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 0.75rem;
-  }
-
-  .result-item-label {
-    font-size: 0.65rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.25rem;
-  }
-
-  .result-item-value {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text);
-    word-break: break-word;
-  }
-
-  .result-item.full { grid-column: 1 / -1; }
-
-  .result-raw {
-    margin-top: 0.75rem;
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 0.75rem;
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    color: #888;
-    white-space: pre-wrap;
-    word-break: break-all;
-    max-height: 160px;
-    overflow-y: auto;
-    display: none;
-  }
-
-  .toggle-raw {
-    font-size: 0.72rem;
-    color: var(--muted);
-    cursor: pointer;
-    margin-top: 0.5rem;
-    display: inline-block;
-  }
-
-  .toggle-raw:hover { color: var(--green); }
-
-  /* Error */
-  .error-box {
-    background: rgba(224,82,82,0.08);
-    border: 1px solid rgba(224,82,82,0.3);
-    border-radius: 10px;
-    padding: 0.9rem 1rem;
-    font-size: 0.85rem;
-    color: var(--error);
-    margin-top: 1rem;
-    display: none;
-  }
-
-  .error-box.show { display: block; }
-
-  /* Footer */
-  .footer {
-    margin-top: 2rem;
-    text-align: center;
-    font-size: 0.75rem;
-    color: #333;
-    animation: fadeUp 0.6s 0.2s ease both;
-  }
-
-  /* Animations */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --green: #1DB954; --green-light: #1ed760;
+  --black: #080808; --s1: #111; --s2: #181818; --s3: #222;
+  --border: rgba(255,255,255,0.08);
+  --text: #f5f5f5; --muted: #888; --dim: #444; --error: #ff4d4d;
+}
+body { min-height: 100vh; background: var(--black); color: var(--text); font-family: 'Instrument Sans', sans-serif; overflow-x: hidden; }
+.blob { position: fixed; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; opacity: 0.12; }
+.blob-1 { width: 500px; height: 500px; background: var(--green); top: -100px; left: -100px; animation: blobMove1 12s ease-in-out infinite alternate; }
+.blob-2 { width: 400px; height: 400px; background: #0d6e34; bottom: -80px; right: -80px; animation: blobMove2 15s ease-in-out infinite alternate; }
+@keyframes blobMove1 { to { transform: translate(40px,60px) scale(1.1); } }
+@keyframes blobMove2 { to { transform: translate(-40px,-50px) scale(0.9); } }
+.page { position: relative; z-index: 1; max-width: 520px; margin: 0 auto; padding: 3rem 1.25rem 4rem; display: flex; flex-direction: column; gap: 2rem; }
+.header { animation: riseUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+.logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+.logo-dot { width: 10px; height: 10px; background: var(--green); border-radius: 50%; box-shadow: 0 0 12px var(--green); animation: glow 2s ease infinite; }
+.logo-label { font-family: 'Syne', sans-serif; font-size: 0.7rem; letter-spacing: 3px; text-transform: uppercase; color: var(--green); font-weight: 700; }
+h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.8rem,10vw,4.2rem); font-weight: 800; line-height: 0.92; letter-spacing: -1px; }
+h1 em { font-style: normal; color: var(--green); display: block; }
+.tagline { margin-top: 1rem; font-size: 0.9rem; color: var(--muted); font-weight: 300; line-height: 1.6; max-width: 360px; }
+.card { background: var(--s1); border: 1px solid var(--border); border-radius: 20px; padding: 1.75rem; animation: riseUp 0.7s 0.1s cubic-bezier(0.16,1,0.3,1) both; }
+.card-title { font-family: 'Syne', sans-serif; font-size: 0.65rem; letter-spacing: 2.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 1.25rem; font-weight: 700; }
+label { display: block; font-size: 0.7rem; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem; }
+textarea { width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Instrument Sans', sans-serif; font-size: 0.95rem; padding: 0.8rem 1rem; outline: none; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; resize: none; }
+textarea::placeholder { color: var(--dim); }
+textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-shadow: 0 0 0 3px rgba(29,185,84,0.08); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.6rem; }
+.chip { background: var(--s2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 13px; font-size: 0.75rem; color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
+.chip:hover { border-color: var(--green); color: var(--green); background: rgba(29,185,84,0.06); }
+.spotify-btn { width: 100%; background: var(--green); color: #000; border: none; border-radius: 12px; padding: 0.9rem 1.5rem; font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; }
+.spotify-btn:hover { background: var(--green-light); box-shadow: 0 6px 30px rgba(29,185,84,0.35); transform: translateY(-1px); }
+.spotify-btn svg { width: 20px; height: 20px; fill: #000; }
+.connected-badge { display: none; align-items: center; gap: 10px; background: rgba(29,185,84,0.08); border: 1px solid rgba(29,185,84,0.25); border-radius: 12px; padding: 0.85rem 1rem; }
+.connected-badge.show { display: flex; }
+.connected-dot { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: glow 1.5s ease infinite; flex-shrink: 0; }
+.connected-info { flex: 1; }
+.connected-name { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+.connected-device { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+.disconnect-btn { font-size: 0.7rem; color: var(--dim); cursor: pointer; background: none; border: none; padding: 4px 8px; border-radius: 6px; transition: color 0.2s; }
+.disconnect-btn:hover { color: var(--error); }
+.device-selector { display: none; margin-top: 0.75rem; }
+.device-selector.show { display: block; }
+.device-list { display: flex; flex-direction: column; gap: 6px; margin-top: 0.5rem; }
+.device-option { display: flex; align-items: center; gap: 10px; background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 0.7rem 1rem; cursor: pointer; transition: all 0.15s; }
+.device-option:hover { border-color: rgba(29,185,84,0.4); background: var(--s3); }
+.device-option.selected { border-color: var(--green); background: rgba(29,185,84,0.06); }
+.device-icon { font-size: 1.1rem; }
+.device-info { flex: 1; }
+.device-name { font-size: 0.85rem; font-weight: 500; color: var(--text); }
+.device-type { font-size: 0.7rem; color: var(--muted); text-transform: capitalize; }
+.device-active { font-size: 0.65rem; color: var(--green); background: rgba(29,185,84,0.1); border-radius: 20px; padding: 2px 8px; }
+.no-devices { font-size: 0.8rem; color: var(--muted); padding: 0.75rem; text-align: center; }
+.btn { width: 100%; background: var(--green); color: #000; border: none; border-radius: 12px; padding: 1rem 1.5rem; font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; margin-top: 1.25rem; }
+.btn:hover { background: var(--green-light); box-shadow: 0 6px 30px rgba(29,185,84,0.35); transform: translateY(-1px); }
+.btn:disabled { background: #1a3d26; color: #2d6b40; cursor: not-allowed; box-shadow: none; transform: none; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.25); border-top-color: #000; border-radius: 50%; animation: spin 0.65s linear infinite; display: none; }
+.btn.loading .spinner { display: block; }
+.eq { display: none; align-items: flex-end; gap: 2px; height: 16px; }
+.eq span { width: 3px; background: #000; border-radius: 2px; animation: eq 0.8s ease infinite; }
+.eq span:nth-child(2) { animation-delay: 0.15s; } .eq span:nth-child(3) { animation-delay: 0.3s; }
+.btn.playing .eq { display: flex; }
+.error-box { background: rgba(255,77,77,0.07); border: 1px solid rgba(255,77,77,0.25); border-radius: 10px; padding: 0.85rem 1rem; font-size: 0.82rem; color: var(--error); display: none; margin-top: 0.75rem; }
+.error-box.show { display: block; }
+.result-card { background: var(--s1); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; display: none; animation: riseUp 0.5s cubic-bezier(0.16,1,0.3,1) both; }
+.result-card.show { display: block; }
+.result-header { background: linear-gradient(135deg,rgba(29,185,84,0.15),rgba(29,185,84,0.05)); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; gap: 10px; }
+.result-live { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: glow 1.5s ease infinite; }
+.result-title { font-family: 'Syne', sans-serif; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--green); font-weight: 700; }
+.result-body { padding: 1.25rem 1.5rem; }
+.result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.result-item { background: var(--s2); border-radius: 10px; padding: 0.75rem; }
+.result-item.full { grid-column: 1/-1; }
+.ri-label { font-size: 0.6rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); margin-bottom: 0.3rem; }
+.ri-value { font-size: 0.88rem; font-weight: 500; color: var(--text); word-break: break-word; }
+.genre-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.genre-tag { background: rgba(29,185,84,0.1); border: 1px solid rgba(29,185,84,0.2); border-radius: 20px; padding: 2px 10px; font-size: 0.72rem; color: var(--green); }
+.raw-toggle { font-size: 0.7rem; color: var(--dim); cursor: pointer; margin-top: 0.75rem; display: inline-block; }
+.raw-toggle:hover { color: var(--muted); }
+.raw-box { background: var(--s2); border-radius: 8px; padding: 0.75rem; font-family: monospace; font-size: 0.72rem; color: #666; white-space: pre-wrap; word-break: break-all; max-height: 150px; overflow-y: auto; margin-top: 0.5rem; display: none; }
+.footer { text-align: center; font-size: 0.7rem; color: #2a2a2a; }
+.footer a { color: #3a3a3a; text-decoration: none; } .footer a:hover { color: var(--muted); }
+@keyframes riseUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+@keyframes glow { 0%,100%{opacity:1} 50%{opacity:0.4} }
+@keyframes eq { 0%,100%{height:4px} 50%{height:14px} }
 </style>
 </head>
 <body>
-
-<div class="container">
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="page">
   <div class="header">
-    <div class="logo">
-      <div class="logo-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-        </svg>
-      </div>
-      <span class="logo-text">Vibe Check</span>
-    </div>
-    <h1>PLAY WHAT<span>YOU FEEL</span></h1>
-    <p class="subtitle">Describe your mood and let AI queue the perfect songs on your Spotify.</p>
+    <div class="logo-row"><div class="logo-dot"></div><span class="logo-label">AI Spotify Agent</span></div>
+    <h1>FEEL THE<em>VIBE.</em></h1>
+    <p class="tagline">Describe your mood. The AI picks the songs and plays them on your Spotify — automatically.</p>
   </div>
 
   <div class="card">
-    <div class="field">
-      <label>Your Vibe</label>
-      <textarea id="vibe" rows="2" placeholder="e.g. late night drive, rainy day chill, hindi party..."></textarea>
-      <div class="vibe-examples">
-        <span class="chip" onclick="setVibe('Hindi party')">Hindi party</span>
-        <span class="chip" onclick="setVibe('Late night lo-fi')">Late night lo-fi</span>
-        <span class="chip" onclick="setVibe('Morning motivation')">Morning motivation</span>
-        <span class="chip" onclick="setVibe('Sad heartbreak')">Sad heartbreak</span>
-        <span class="chip" onclick="setVibe('90s Bollywood')">90s Bollywood</span>
-        <span class="chip" onclick="setVibe('Workout energy')">Workout energy</span>
+    <div class="card-title">Step 1 — Connect Spotify</div>
+    <div id="connectSection">
+      <button class="spotify-btn" onclick="connectSpotify()">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+        Connect with Spotify
+      </button>
+      <p style="font-size:0.72rem;color:var(--dim);margin-top:0.6rem;text-align:center;line-height:1.5">We'll detect your active devices automatically. No manual ID needed.</p>
+    </div>
+    <div class="connected-badge" id="connectedBadge">
+      <div class="connected-dot"></div>
+      <div class="connected-info">
+        <div class="connected-name" id="connectedName">Connected</div>
+        <div class="connected-device" id="connectedDevice">Fetching devices...</div>
       </div>
+      <button class="disconnect-btn" onclick="disconnect()">Disconnect</button>
     </div>
-
-    <div class="field">
-      <label>Spotify Device ID</label>
-      <input type="text" id="device_id" placeholder="e.g. abc123def456..."/>
-      <p class="device-hint">
-        Open Spotify, start playing anything, then find your device ID via
-        <a href="https://developer.spotify.com/console/get-users-available-devices/" target="_blank">Spotify Developer Console</a>.
-      </p>
+    <div class="device-selector" id="deviceSelector">
+      <label>Choose playback device</label>
+      <div class="device-list" id="deviceList"></div>
     </div>
+  </div>
 
+  <div class="card" id="vibeCard" style="opacity:0.4;pointer-events:none;transition:opacity 0.3s">
+    <div class="card-title">Step 2 — Describe your vibe</div>
+    <textarea id="vibe" rows="2" placeholder="e.g. rainy night with chai, hindi party banger, late night sad drive..."></textarea>
+    <div class="chips" style="margin-top:0.6rem">
+      <span class="chip" onclick="setVibe('Hindi party banger')">Hindi party</span>
+      <span class="chip" onclick="setVibe('Late night lo-fi chill')">Late night lo-fi</span>
+      <span class="chip" onclick="setVibe('Morning motivation run')">Morning run</span>
+      <span class="chip" onclick="setVibe('Sad heartbreak songs')">Sad heartbreak</span>
+      <span class="chip" onclick="setVibe('90s Bollywood nostalgia')">90s Bollywood</span>
+      <span class="chip" onclick="setVibe('Intense workout energy')">Workout</span>
+      <span class="chip" onclick="setVibe('Romantic dinner evening')">Romantic</span>
+      <span class="chip" onclick="setVibe('Focus deep work instrumental')">Deep focus</span>
+    </div>
     <button class="btn" id="playBtn" onclick="sendVibe()">
       <div class="spinner"></div>
+      <div class="eq"><span></span><span></span><span></span></div>
       <span class="btn-text">PLAY MY VIBE</span>
     </button>
-
     <div class="error-box" id="errorBox"></div>
   </div>
 
-  <div class="result" id="result">
-    <div class="result-inner">
-      <div class="result-label">Agent Response</div>
+  <div class="result-card" id="resultCard">
+    <div class="result-header"><div class="result-live"></div><div class="result-title">Now Playing</div></div>
+    <div class="result-body">
       <div class="result-grid" id="resultGrid"></div>
-      <span class="toggle-raw" onclick="toggleRaw()">Show raw response ↓</span>
-      <div class="result-raw" id="resultRaw"></div>
+      <div class="raw-toggle" onclick="toggleRaw()"><span id="rawToggleText">Show raw JSON</span> ↓</div>
+      <div class="raw-box" id="rawBox"></div>
     </div>
   </div>
 
-  <div class="footer">Powered by n8n · Groq AI · Spotify API</div>
+  <div class="footer">Built with n8n · Groq AI · Spotify API &nbsp;·&nbsp; <a href="https://github.com/MAHADEVAN-007/spotify-vibe-agent" target="_blank">GitHub ↗</a></div>
 </div>
 
 <script>
-  const WEBHOOK_URL = 'https://automationid1.app.n8n.cloud/webhook/vibe-check';
+// ─── PASTE YOUR CLIENT ID HERE ─────────────────────────
+const CLIENT_ID = 'cc4a8cc3954e49d4af350a919408b582';
+// ───────────────────────────────────────────────────────
+const REDIRECT_URI = 'https://spotify-vibe-agent.netlify.app/callback';
+const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+const WEBHOOK_URL = 'https://automationid1.app.n8n.cloud/webhook/vibe-check';
 
-  function setVibe(text) {
-    document.getElementById('vibe').value = text;
-    document.getElementById('vibe').focus();
-  }
+let accessToken = null, selectedDeviceId = null;
 
-  function toggleRaw() {
-    const raw = document.getElementById('resultRaw');
-    const toggle = document.querySelector('.toggle-raw');
-    if (raw.style.display === 'block') {
-      raw.style.display = 'none';
-      toggle.textContent = 'Show raw response ↓';
-    } else {
-      raw.style.display = 'block';
-      toggle.textContent = 'Hide raw response ↑';
-    }
-  }
+function genRandom(n) { const a=new Uint8Array(n); crypto.getRandomValues(a); return [...a].map(b=>b.toString(16).padStart(2,'0')).join(''); }
+async function sha256(s) { return crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)); }
+function b64url(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 
-  async function sendVibe() {
-    const vibe = document.getElementById('vibe').value.trim();
-    const device_id = document.getElementById('device_id').value.trim();
-    const btn = document.getElementById('playBtn');
-    const errorBox = document.getElementById('errorBox');
-    const resultEl = document.getElementById('result');
+async function connectSpotify() {
+  const v=genRandom(32), c=b64url(await sha256(v));
+  localStorage.setItem('pkce_v',v);
+  window.location.href=`https://accounts.spotify.com/authorize?${new URLSearchParams({client_id:CLIENT_ID,response_type:'code',redirect_uri:REDIRECT_URI,scope:SCOPES,code_challenge_method:'S256',code_challenge:c})}`;
+}
 
-    // Validate
-    if (!vibe) { showError('Please describe your vibe first.'); return; }
-    if (!device_id) { showError('Please enter your Spotify device ID.'); return; }
+async function handleCallback() {
+  const code=new URLSearchParams(window.location.search).get('code'); if(!code) return;
+  window.history.replaceState({},'','/');
+  const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:CLIENT_ID,grant_type:'authorization_code',code,redirect_uri:REDIRECT_URI,code_verifier:localStorage.getItem('pkce_v')})});
+  const d=await r.json();
+  if(d.access_token){accessToken=d.access_token;localStorage.setItem('spt',accessToken);localStorage.setItem('spt_exp',Date.now()+d.expires_in*1000);await onConnected();}
+}
 
-    // Loading state
-    btn.disabled = true;
-    btn.classList.add('loading');
-    btn.querySelector('.btn-text').textContent = 'READING YOUR VIBE...';
-    errorBox.classList.remove('show');
-    resultEl.classList.remove('show');
+async function onConnected() {
+  const p=await spFetch('https://api.spotify.com/v1/me');
+  document.getElementById('connectSection').style.display='none';
+  document.getElementById('connectedBadge').classList.add('show');
+  document.getElementById('connectedName').textContent=p.display_name||'Connected';
+  const vc=document.getElementById('vibeCard'); vc.style.opacity='1'; vc.style.pointerEvents='auto';
+  await loadDevices();
+}
 
-    try {
-      const res = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vibe, device_id })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        showError(`Error ${res.status}: ${data.message || 'Something went wrong.'}`);
-        return;
-      }
-
-      showResult(data);
-
-    } catch (err) {
-      showError('Could not reach the agent. Check your connection and try again.');
-    } finally {
-      btn.disabled = false;
-      btn.classList.remove('loading');
-      btn.querySelector('.btn-text').textContent = 'PLAY MY VIBE';
-    }
-  }
-
-  function showError(msg) {
-    const errorBox = document.getElementById('errorBox');
-    errorBox.textContent = msg;
-    errorBox.classList.add('show');
-  }
-
-  function showResult(data) {
-    const grid = document.getElementById('resultGrid');
-    const raw = document.getElementById('resultRaw');
-    const resultEl = document.getElementById('result');
-
-    grid.innerHTML = '';
-
-    // Try to display known fields nicely
-    const fields = [
-      { key: 'mood', label: 'Mood' },
-      { key: 'energy', label: 'Energy' },
-      { key: 'tempo', label: 'Tempo' },
-      { key: 'search_query', label: 'Search Query', full: true },
-      { key: 'genres', label: 'Genres', full: true },
-    ];
-
-    let hasFields = false;
-    fields.forEach(f => {
-      const val = data[f.key] ?? (data[0] && data[0][f.key]);
-      if (val !== undefined && val !== null) {
-        hasFields = true;
-        const div = document.createElement('div');
-        div.className = 'result-item' + (f.full ? ' full' : '');
-        const displayVal = Array.isArray(val) ? val.join(', ') : val;
-        div.innerHTML = `<div class="result-item-label">${f.label}</div><div class="result-item-value">${displayVal}</div>`;
-        grid.appendChild(div);
-      }
-    });
-
-    if (!hasFields) {
-      const div = document.createElement('div');
-      div.className = 'result-item full';
-      div.innerHTML = `<div class="result-item-label">Response</div><div class="result-item-value">✓ Agent executed successfully</div>`;
-      grid.appendChild(div);
-    }
-
-    raw.textContent = JSON.stringify(data, null, 2);
-    raw.style.display = 'none';
-    document.querySelector('.toggle-raw').textContent = 'Show raw response ↓';
-
-    resultEl.classList.add('show');
-  }
-
-  // Enter key on device_id triggers submit
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('device_id').addEventListener('keydown', e => {
-      if (e.key === 'Enter') sendVibe();
-    });
+async function loadDevices() {
+  const d=await spFetch('https://api.spotify.com/v1/me/player/devices');
+  const devs=d.devices||[], list=document.getElementById('deviceList'), sel=document.getElementById('deviceSelector');
+  sel.classList.add('show');
+  if(!devs.length){document.getElementById('connectedDevice').textContent='No active devices — open Spotify first';list.innerHTML='<div class="no-devices">Open Spotify on any device and play something, then refresh.</div>';return;}
+  list.innerHTML='';
+  const ic={computer:'💻',smartphone:'📱',tablet:'📱',speaker:'🔊',tv:'📺',cast_video:'📺',cast_audio:'🔊'};
+  devs.forEach(dev=>{
+    const el=document.createElement('div');
+    el.className='device-option'+(dev.is_active?' selected':'');
+    el.innerHTML=`<div class="device-icon">${ic[dev.type?.toLowerCase()]||'🎵'}</div><div class="device-info"><div class="device-name">${dev.name}</div><div class="device-type">${dev.type}</div></div>${dev.is_active?'<span class="device-active">Active</span>':''}`;
+    el.onclick=()=>selectDevice(dev.id,el); list.appendChild(el);
+    if(dev.is_active||!selectedDeviceId){selectedDeviceId=dev.id;document.getElementById('connectedDevice').textContent=`Playing on: ${dev.name}`;}
   });
+}
+
+function selectDevice(id,el){selectedDeviceId=id;document.querySelectorAll('.device-option').forEach(d=>d.classList.remove('selected'));el.classList.add('selected');document.getElementById('connectedDevice').textContent=`Playing on: ${el.querySelector('.device-name').textContent}`;}
+
+function disconnect(){accessToken=null;selectedDeviceId=null;localStorage.removeItem('spt');localStorage.removeItem('spt_exp');document.getElementById('connectSection').style.display='block';document.getElementById('connectedBadge').classList.remove('show');document.getElementById('deviceSelector').classList.remove('show');document.getElementById('deviceList').innerHTML='';const vc=document.getElementById('vibeCard');vc.style.opacity='0.4';vc.style.pointerEvents='none';}
+
+async function spFetch(url){const r=await fetch(url,{headers:{Authorization:`Bearer ${accessToken}`}});if(r.status===204)return{};return r.json();}
+
+function setVibe(t){document.getElementById('vibe').value=t;}
+
+async function sendVibe(){
+  const vibe=document.getElementById('vibe').value.trim(), btn=document.getElementById('playBtn'), err=document.getElementById('errorBox'), rc=document.getElementById('resultCard');
+  if(!vibe){showErr('Please describe your vibe first!');return;}
+  if(!selectedDeviceId){showErr('Connect Spotify and select a device first.');return;}
+  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.btn-text').textContent='READING YOUR VIBE...';err.classList.remove('show');rc.classList.remove('show');
+  try{
+    const r=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vibe,device_id:selectedDeviceId})});
+    const data=await r.json();
+    if(!r.ok){showErr(`Error ${r.status}: ${data.message||'Something went wrong.'}`);return;}
+    btn.classList.remove('loading');btn.classList.add('playing');btn.querySelector('.btn-text').textContent='NOW PLAYING ♪';
+    setTimeout(()=>{btn.classList.remove('playing');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';btn.disabled=false;},3000);
+    showResult(data);
+  }catch(e){showErr('Could not reach the agent. Make sure your n8n workflow is active.');btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';}
+}
+
+function showErr(m){const e=document.getElementById('errorBox');e.textContent=m;e.classList.add('show');}
+
+function showResult(data){
+  const grid=document.getElementById('resultGrid'); grid.innerHTML='';
+  const src=Array.isArray(data)?data[0]:data;
+  [{key:'mood',label:'Mood'},{key:'energy',label:'Energy'},{key:'tempo',label:'Tempo'},{key:'search_query',label:'Search Query',full:true},{key:'genres',label:'Genres',full:true,isList:true}].forEach(f=>{
+    const val=src?.[f.key]; if(val===undefined||val===null) return;
+    const div=document.createElement('div'); div.className='result-item'+(f.full?' full':'');
+    div.innerHTML=f.isList&&Array.isArray(val)?`<div class="ri-label">${f.label}</div><div class="ri-value genre-list">${val.map(g=>`<span class="genre-tag">${g}</span>`).join('')}</div>`:`<div class="ri-label">${f.label}</div><div class="ri-value">${Array.isArray(val)?val.join(', '):val}</div>`;
+    grid.appendChild(div);
+  });
+  if(!grid.children.length) grid.innerHTML='<div class="result-item full"><div class="ri-label">Status</div><div class="ri-value">✓ Check your Spotify!</div></div>';
+  document.getElementById('rawBox').textContent=JSON.stringify(data,null,2);
+  document.getElementById('resultCard').classList.add('show');
+}
+
+function toggleRaw(){const b=document.getElementById('rawBox'),t=document.getElementById('rawToggleText'),o=b.style.display==='block';b.style.display=o?'none':'block';t.textContent=o?'Show raw JSON':'Hide raw JSON';}
+
+window.addEventListener('DOMContentLoaded',async()=>{
+  if(window.location.search.includes('code=')){await handleCallback();return;}
+  const t=localStorage.getItem('spt'),e=localStorage.getItem('spt_exp');
+  if(t&&e&&Date.now()<parseInt(e)){accessToken=t;await onConnected();}
+});
 </script>
 </body>
 </html>
