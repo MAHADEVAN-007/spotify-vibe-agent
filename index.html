@@ -174,14 +174,14 @@ function b64url(buf) { return btoa(String.fromCharCode(...new Uint8Array(buf))).
 
 async function connectSpotify() {
   const v=genRandom(32), c=b64url(await sha256(v));
-  localStorage.setItem('pkce_v',v);
+  sessionStorage.setItem('pkce_v',v);
   window.location.href=`https://accounts.spotify.com/authorize?${new URLSearchParams({client_id:CLIENT_ID,response_type:'code',redirect_uri:REDIRECT_URI,scope:SCOPES,code_challenge_method:'S256',code_challenge:c})}`;
 }
 
 async function handleCallback() {
   const code=new URLSearchParams(window.location.search).get('code'); if(!code) return;
   window.history.replaceState({},'','/');
-  const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:CLIENT_ID,grant_type:'authorization_code',code,redirect_uri:REDIRECT_URI,code_verifier:localStorage.getItem('pkce_v')})});
+  const r=await fetch('https://accounts.spotify.com/api/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:CLIENT_ID,grant_type:'authorization_code',code,redirect_uri:REDIRECT_URI,code_verifier:sessionStorage.getItem('pkce_v')})});
   const d=await r.json();
   if(d.access_token){accessToken=d.access_token;localStorage.setItem('spt',accessToken);localStorage.setItem('spt_exp',Date.now()+d.expires_in*1000);await onConnected();}
 }
