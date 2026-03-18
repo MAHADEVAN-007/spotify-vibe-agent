@@ -99,8 +99,6 @@ textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-s
 @keyframes spin { to{transform:rotate(360deg)} }
 @keyframes glowPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 @keyframes eq { 0%,100%{height:4px} 50%{height:14px} }
-@keyframes blobMove1 { to { transform: translate(40px, 60px) scale(1.1); } }
-@keyframes blobMove2 { to { transform: translate(-40px, -50px) scale(0.9); } }
 </style>
 </head>
 <body>
@@ -177,10 +175,13 @@ textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-s
 </div>
 
 <script>
+// ── CONFIG ──────────────────────────────────────────────
 const CLIENT_ID    = 'cc4a8cc3954e49d4af350a919408b582';
 const REDIRECT_URI = 'https://spotify-vibe-agent.netlify.app/callback';
 const SCOPES       = 'user-read-playback-state user-modify-playback-state streaming';
 const WEBHOOK_URL  = 'https://automationid1.app.n8n.cloud/webhook/vibe-check';
+const SECRET_KEY   = 'spotify@vibe@n8n_workflow';
+// ────────────────────────────────────────────────────────
 
 let accessToken = null, selectedDevice = null;
 
@@ -261,9 +262,16 @@ async function playVibe(){
   btn.disabled=true;btn.classList.add('loading');err.classList.remove('show');
 
   try{
-    // Step 1: Get search query from n8n AI
+    // Step 1: Get search query from n8n AI — with secret key header
     btn.querySelector('.btn-text').textContent='ASKING THE AI...';
-    const n8nRes=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({vibe})});
+    const n8nRes=await fetch(WEBHOOK_URL,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-secret-key': SECRET_KEY
+      },
+      body:JSON.stringify({vibe})
+    });
     const n8nData=await n8nRes.json();
     const src=Array.isArray(n8nData)?n8nData[0]:n8nData;
     const searchQuery=src?.search_query||vibe;
