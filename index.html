@@ -175,12 +175,11 @@ textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-s
 </div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────────
+// ── CONFIG — safe to be public, no secrets here ─────────
 const CLIENT_ID    = 'cc4a8cc3954e49d4af350a919408b582';
 const REDIRECT_URI = 'https://spotify-vibe-agent.netlify.app/callback';
 const SCOPES       = 'user-read-playback-state user-modify-playback-state streaming';
-const WEBHOOK_URL  = 'https://automationid1.app.n8n.cloud/webhook/vibe-check';
-const SECRET_KEY   = 'spotify@vibe@n8n_workflow';
+const PROXY_URL    = '/.netlify/functions/vibe'; // ← calls our backend, not n8n directly
 // ────────────────────────────────────────────────────────
 
 let accessToken = null, selectedDevice = null;
@@ -262,18 +261,15 @@ async function playVibe(){
   btn.disabled=true;btn.classList.add('loading');err.classList.remove('show');
 
   try{
-    // Step 1: Get search query from n8n AI — with secret key header
+    // Step 1: Call our Netlify proxy (secret key is hidden on the server)
     btn.querySelector('.btn-text').textContent='ASKING THE AI...';
-    const n8nRes=await fetch(WEBHOOK_URL,{
+    const proxyRes=await fetch(PROXY_URL,{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-secret-key': SECRET_KEY
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({vibe})
     });
-    const n8nData=await n8nRes.json();
-    const src=Array.isArray(n8nData)?n8nData[0]:n8nData;
+    const proxyData=await proxyRes.json();
+    const src=Array.isArray(proxyData)?proxyData[0]:proxyData;
     const searchQuery=src?.search_query||vibe;
 
     // Step 2: Search Spotify directly with user's own token
@@ -282,7 +278,7 @@ async function playVibe(){
     const tracks=searchRes?.tracks?.items||[];
     if(!tracks.length){showError('No tracks found. Try a different vibe!');btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';return;}
 
-    // Step 3: Play on user's own device with user's own token
+    // Step 3: Play on user's device with their own token
     btn.querySelector('.btn-text').textContent='PLAYING...';
     await spFetch(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice.id}`,{method:'PUT',body:JSON.stringify({uris:tracks.map(t=>t.uri)})});
 
