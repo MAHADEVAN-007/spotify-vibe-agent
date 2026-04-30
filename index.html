@@ -38,7 +38,7 @@ textarea { width: 100%; background: var(--s2); border: 1px solid var(--border); 
 textarea::placeholder { color: var(--dim); }
 textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-shadow: 0 0 0 3px rgba(29,185,84,0.08); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 0.6rem; }
-.chip { background: var(--s2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 13px; font-size: 0.75rem; color: var(--muted); cursor: pointer; transition: all 0.15s; user-select: none; }
+.chip { background: var(--s2); border: 1px solid var(--border); border-radius: 20px; padding: 5px 13px; font-size: 0.75rem; color: var(--muted); cursor: pointer; transition: all 0.15s;}
 .chip:hover, .chip.active { border-color: var(--green); color: var(--green); background: rgba(29,185,84,0.06); }
 .spotify-btn { width: 100%; background: var(--green); color: #000; border: none; border-radius: 12px; padding: 0.9rem 1.5rem; font-family: 'Syne', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background 0.2s, transform 0.15s, box-shadow 0.2s; }
 .spotify-btn:hover { background: var(--green-light); box-shadow: 0 6px 30px rgba(29,185,84,0.35); transform: translateY(-1px); }
@@ -170,14 +170,14 @@ textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-s
 
   <div class="footer">
     Built with n8n · Groq AI · Spotify API &nbsp;·&nbsp;
-    <a href="https://github.com/MAHADEVAN-007/spotify-vibe-agent" target="_blank">GitHub ↗</a>
+    <a href="https://github.com/MAHADEVAN-007/spotify-vibe-agent" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
   </div>
 </div>
 
 <script>
 // ── CONFIG — safe to be public, no secrets here ─────────
 const CLIENT_ID    = 'cc4a8cc3954e49d4af350a919408b582';
-const REDIRECT_URI = 'https://spotify-vibe-agent.netlify.app/callback';
+const REDIRECT_URI = 'https://spotify-vibe-agent.netlify.app/';
 const SCOPES       = 'user-read-playback-state user-modify-playback-state streaming';
 const PROXY_URL    = '/.netlify/functions/vibe'; // ← calls our backend, not n8n directly
 // ────────────────────────────────────────────────────────
