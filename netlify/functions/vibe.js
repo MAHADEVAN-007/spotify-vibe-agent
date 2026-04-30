@@ -6,7 +6,7 @@ exports.handler = async function(event) {
   try {
     const body = JSON.parse(event.body);
 
-    const response = await fetch('https://automationid1.app.n8n.cloud/webhook/vibe-check', {
+    const response = await fetch(process.env.N8N_WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
