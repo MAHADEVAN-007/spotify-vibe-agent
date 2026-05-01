@@ -280,7 +280,14 @@ async function playVibe(){
 
     // Step 3: Play on user's device with their own token
     btn.querySelector('.btn-text').textContent='PLAYING...';
-    await spFetch(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice.id}`,{method:'PUT',body:JSON.stringify({uris:tracks.map(t=>t.uri)})});
+    await spFetch(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice.id}`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        uris: tracks.map(t => t.uri),
+        offset: { position: 0 },
+        position_ms: 0
+      })
+    });
 
     btn.classList.remove('loading');btn.classList.add('playing');btn.querySelector('.btn-text').textContent='NOW PLAYING ♪';
     setTimeout(()=>{btn.classList.remove('playing');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';btn.disabled=false;},3000);
