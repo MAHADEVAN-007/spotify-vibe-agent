@@ -274,8 +274,8 @@ async function playVibe(){
 
     // Step 2: Search Spotify directly with user's own token
     btn.querySelector('.btn-text').textContent='SEARCHING SPOTIFY...';
-    const searchRes = await spFetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=20`); 
-    const tracks=searchRes?.tracks?.items||[];
+    const searchRes = await spFetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=10`); 
+    const tracks = (searchRes?.tracks?.items || []).sort(() => Math.random() - 0.5);
     if(!tracks.length){showError('No tracks found. Try a different vibe!');btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';return;}
 
     // Step 3: Play on user's device with their own token
@@ -284,7 +284,7 @@ async function playVibe(){
       method: 'PUT',
       body: JSON.stringify({
         uris: tracks.map(t => t.uri),
-        offset: { position: Math.floor(Math.random() * Math.min(tracks.length, 5)) },
+        offset: { position: 0 },
         position_ms: 0
       })
     });
