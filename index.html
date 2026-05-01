@@ -274,7 +274,7 @@ async function playVibe(){
 
     // Step 2: Search Spotify directly with user's own token
     btn.querySelector('.btn-text').textContent='SEARCHING SPOTIFY...';
-    const randomOffset = Math.floor(Math.random() * 20);
+    const randomOffset = Math.floor(Math.random() * 5);
     const searchRes = await spFetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(searchQuery)}&type=track&limit=20&offset=${randomOffset}`); 
     const tracks=searchRes?.tracks?.items||[];
     if(!tracks.length){showError('No tracks found. Try a different vibe!');btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';return;}
