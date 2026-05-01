@@ -302,7 +302,7 @@ async function playVibe(){
 function showNowPlaying(tracks,query){
   const body=document.getElementById('npBody');
   body.innerHTML=`<div class="np-query">AI searched: <span>"${query}"</span></div>`;
-  tracks.slice(0,3).forEach(t=>{
+  tracks.slice(0,10).forEach(t=>{
     const img=t.album?.images?.[0]?.url||'';
     const artists=t.artists?.map(a=>a.name).join(', ')||'';
     const div=document.createElement('div');
