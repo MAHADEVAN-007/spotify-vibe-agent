@@ -284,7 +284,7 @@ async function playVibe(){
       method: 'PUT',
       body: JSON.stringify({
         uris: tracks.map(t => t.uri),
-        offset: { position: Math.floor(Math.random() * tracks.length) },
+        offset: { position: Math.floor(Math.random() * Math.min(tracks.length, 5)) },
         position_ms: 0
       })
     });
