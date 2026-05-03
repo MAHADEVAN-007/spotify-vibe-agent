@@ -221,7 +221,12 @@ async function loadDevices(){
   const list=document.getElementById('deviceList');
   document.getElementById('deviceSelector').classList.add('show');
   list.innerHTML='';
-  if(!devices.length){list.innerHTML='<div class="no-devices">No active devices found.<br>Open Spotify on any device and start playing something, then refresh.</div>';return;}
+  if(!devices.length){
+    list.innerHTML='<div class="no-devices">No devices found. Open Spotify app, play any song, then tap ↻ Refresh.<br><br>On iPhone: make sure Spotify app is open and playing.</div>';
+    // Still allow playing via queue even without device
+    selectedDevice = null;
+    return;
+  }
   const icons={computer:'💻',smartphone:'📱',tablet:'📱',speaker:'🔊',tv:'📺'};
   devices.forEach(d=>{
     const div=document.createElement('div');
@@ -259,7 +264,9 @@ async function playVibe(){
   const btn=document.getElementById('playBtn');
   const err=document.getElementById('errorBox');
   if(!vibe){showError('Please describe your vibe!');return;}
-  if(!selectedDevice){showError('Please select a Spotify device.');return;}
+  if(!selectedDevice && !document.querySelector('.device-option')){
+    showError('Please open Spotify app, play any song, then tap ↻ Refresh devices.');return;
+  }
   btn.disabled=true;btn.classList.add('loading');err.classList.remove('show');
 
   try{
@@ -283,10 +290,18 @@ async function playVibe(){
     // Step 3: Play on user's device with their own token
     // Step 3: Transfer playback to device first, then play
     btn.querySelector('.btn-text').textContent='PLAYING...';
-    await spFetch(`https://api.spotify.com/v1/me/player`,{method:'PUT',body:JSON.stringify({device_ids:[selectedDevice.id],play:false})});
-    await new Promise(r=>setTimeout(r,500));
-    await spFetch(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice.id}`,{method:'PUT',body:JSON.stringify({uris:tracks.map(t=>t.uri),offset:{position:0},position_ms:0})});
-
+    // Try full playback first, fall back to queue if no active device
+    const playRes = await fetch(`https://api.spotify.com/v1/me/player/play${selectedDevice?.id ? '?device_id='+selectedDevice.id : ''}`, {
+      method: 'PUT',
+      headers: {Authorization:`Bearer ${accessToken}`,'Content-Type':'application/json'},
+      body: JSON.stringify({uris:tracks.map(t=>t.uri),offset:{position:0},position_ms:0})
+    });
+    if(playRes.status === 404 || playRes.status === 403){
+      // Fallback: add all tracks to queue one by one
+      for(const t of tracks.slice(0,5)){
+        await spFetch(`https://api.spotify.com/v1/me/player/queue?uri=${encodeURIComponent(t.uri)}`,{method:'POST'});
+      }
+    }
     btn.classList.remove('loading');btn.classList.add('playing');btn.querySelector('.btn-text').textContent='NOW PLAYING ♪';
     setTimeout(()=>{btn.classList.remove('playing');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';btn.disabled=false;},3000);
     showNowPlaying(tracks,searchQuery);
