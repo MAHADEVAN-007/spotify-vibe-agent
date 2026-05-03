@@ -135,6 +135,7 @@ textarea:focus { border-color: rgba(29,185,84,0.5); background: var(--s3); box-s
     </div>
     <div class="device-selector" id="deviceSelector">
       <label>Playback device</label>
+      <button onclick="loadDevices()" style="font-size:0.7rem;background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;cursor:pointer;margin-bottom:8px;font-family:'Instrument Sans',sans-serif;">↻ Refresh devices</button>
       <div class="device-list" id="deviceList"></div>
     </div>
   </div>
@@ -253,6 +254,7 @@ async function spFetch(url,options={}){
 function setVibe(el,text){document.getElementById('vibe').value=text;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
 
 async function playVibe(){
+  try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){const c=new AC();await c.resume();}}catch(e){}
   const vibe=document.getElementById('vibe').value.trim();
   const btn=document.getElementById('playBtn');
   const err=document.getElementById('errorBox');
@@ -279,15 +281,11 @@ async function playVibe(){
     if(!tracks.length){showError('No tracks found. Try a different vibe!');btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';return;}
 
     // Step 3: Play on user's device with their own token
+    // Step 3: Transfer playback to device first, then play
     btn.querySelector('.btn-text').textContent='PLAYING...';
-    await spFetch(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice.id}`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        uris: tracks.map(t => t.uri),
-        offset: { position: 0 },
-        position_ms: 0
-      })
-    });
+    await spFetch(`https://api.spotify.com/v1/me/player`,{method:'PUT',body:JSON.stringify({device_ids:[selectedDevice.id],play:false})});
+    await new Promise(r=>setTimeout(r,500));
+    await spFetch(`https://api.spotify.com/v1/me/player/play?device_id=${selectedDevice.id}`,{method:'PUT',body:JSON.stringify({uris:tracks.map(t=>t.uri),offset:{position:0},position_ms:0})});
 
     btn.classList.remove('loading');btn.classList.add('playing');btn.querySelector('.btn-text').textContent='NOW PLAYING ♪';
     setTimeout(()=>{btn.classList.remove('playing');btn.querySelector('.btn-text').textContent='PLAY MY VIBE';btn.disabled=false;},3000);
